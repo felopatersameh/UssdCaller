@@ -100,12 +100,11 @@ class _UssdCallerPageState extends State<UssdCallerPage> {
 
   void _showAddNumberDialog() async {
     final List<String> numbers = await ReadingExcel.pickAndReadExcel();
-    // final List<String> numbers = ["848", "251251515", "555"];
     for (var element in numbers) {
       HiveService.addNumber(element);
     }
 
-    await startProcessFromIndex(0);
+    // await startProcessFromIndex(0);
   }
 
   void _showSnackBar(String message, {Color? backgroundColor}) {
