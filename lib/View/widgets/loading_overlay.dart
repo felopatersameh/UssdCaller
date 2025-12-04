@@ -85,7 +85,7 @@ class LoadingOverlay extends StatelessWidget {
                             borderRadius: BorderRadius.circular(10.r),
                           ),
                           child: Text(
-                            number,
+                            number.toString(),
                             style: AppConstants.loadingOverlayNumberTextStyle
                                 .copyWith(
                                   color: AppColors.primaryColor.shade700,

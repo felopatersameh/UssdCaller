@@ -81,7 +81,7 @@ class NumbersList extends StatelessWidget {
           physics: const NeverScrollableScrollPhysics(),
           itemCount: HiveService.totalNumbers,
           itemBuilder: (context, index) {
-            final number = HiveService.getNumberAt(index)!;
+            final callEntry = HiveService.getNumberAt(index)!;
             final isCurrent = index == currentIndex && isProcessRunning;
 
             return Container(
@@ -138,7 +138,8 @@ class NumbersList extends StatelessWidget {
                   ),
                 ),
                 title: Text(
-                  number,
+                  callEntry
+                      .number, // Access the actual string property from CallEntry
                   style: AppConstants.ussdTemplateTextStyle.copyWith(
                     fontWeight: isCurrent ? FontWeight.bold : FontWeight.w600,
                     fontSize: 15.sp,
@@ -148,7 +149,7 @@ class NumbersList extends StatelessWidget {
                 subtitle: Padding(
                   padding: EdgeInsets.only(top: 4.h),
                   child: Text(
-                    generateUSSD(number),
+                    generateUSSD(callEntry.number),
                     style: AppConstants.ussdTemplateTextStyle.copyWith(
                       fontSize: 11.sp,
                       color: AppColors.textColor.withValues(alpha: 0.6),
@@ -158,6 +159,13 @@ class NumbersList extends StatelessWidget {
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    if (callEntry.isCalled)
+                      Icon(
+                        Icons.check_circle,
+                        color: AppColors.accentColor,
+                        size: 20.sp,
+                      ),
+                    SizedBox(width: callEntry.isCalled ? 8.w : 0),
                     // New "Start from here" button
                     Container(
                       decoration: BoxDecoration(

@@ -1,4 +1,5 @@
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:auto_caller/utils/Services/call_entry.dart';
 
 class HiveService {
   static const String _numbersBox = 'numbers';
@@ -7,11 +8,12 @@ class HiveService {
 
   static Future<void> init() async {
     await Hive.initFlutter();
-    await Hive.openBox<String>(_numbersBox);
+    Hive.registerAdapter(CallEntryAdapter());
+    await Hive.openBox<CallEntry>(_numbersBox);
     await Hive.openBox<String>(_templateBox);
   }
 
-  static Box<String> get numbersBox => Hive.box<String>(_numbersBox);
+  static Box<CallEntry> get numbersBox => Hive.box<CallEntry>(_numbersBox);
   static Box<String> get templateBox => Hive.box<String>(_templateBox);
 
   static String getUssdTemplate() {
@@ -23,7 +25,7 @@ class HiveService {
   }
 
   static void addNumber(String number) {
-    numbersBox.add(number);
+    numbersBox.add(CallEntry(number: number));
   }
 
   static void removeNumber(int index) {
@@ -34,18 +36,32 @@ class HiveService {
     numbersBox.clear();
   }
 
-  static String? getNumberAt(int index) {
+  static CallEntry? getNumberAt(int index) {
     if (index >= 0 && index < numbersBox.length) {
       return numbersBox.getAt(index);
     }
     return null;
   }
 
+  static void updateCallEntryStatus(
+    int index, {
+    bool? isCalled,
+    bool? shouldTryLater,
+  }) {
+    final entry = numbersBox.getAt(index);
+    if (entry != null) {
+      numbersBox.putAt(
+        index,
+        entry.copyWith(isCalled: isCalled, shouldTryLater: shouldTryLater),
+      );
+    }
+  }
+
   static int get totalNumbers => numbersBox.length;
 
   static bool get hasNumbers => numbersBox.isNotEmpty;
 
-  static List<String> getAllNumbers() {
+  static List<CallEntry> getAllNumbers() {
     return numbersBox.values.toList();
   }
 }

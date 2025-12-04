@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:auto_caller/utils/constants/app_colors.dart';
-import 'package:auto_caller/utils/constants/app_constants.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+
+import '../../utils/constants/app_colors.dart';
 
 class TemplateCard extends StatelessWidget {
   const TemplateCard({
@@ -25,96 +26,141 @@ class TemplateCard extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(20.r),
+        borderRadius: BorderRadius.circular(24.r),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primaryColor.shade200,
-            blurRadius: 15.r,
-            offset: Offset(0, 5.h),
+            color: AppColors.primaryColor.shade200.withValues(alpha: 0.4),
+            blurRadius: 20.r,
+            offset: Offset(0, 8.h),
           ),
         ],
       ),
       child: Padding(
-        padding: EdgeInsets.all(20.w),
+        padding: EdgeInsets.all(24.w),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Header
             Row(
               children: [
                 Container(
-                  padding: EdgeInsets.all(10.w),
+                  padding: EdgeInsets.all(12.w),
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(12.r),
+                    borderRadius: BorderRadius.circular(14.r),
                   ),
-                  child: Icon(Icons.code, color: Colors.white, size: 26.sp),
-                ),
-                SizedBox(width: 12.w),
-                Text(
-                  "USSD Template",
-                  style: TextStyle(
-                    fontSize: 18.sp,
-                    fontWeight: FontWeight.bold,
+                  child: Icon(
+                    Icons.code_rounded,
                     color: Colors.white,
+                    size: 28.sp,
                   ),
+                ),
+                SizedBox(width: 14.w),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "USSD Template",
+                      style: TextStyle(
+                        fontSize: 20.sp,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    Text(
+                      "Configure your USSD code",
+                      style: TextStyle(fontSize: 12.sp, color: Colors.white70),
+                    ),
+                  ],
                 ),
               ],
             ),
-            SizedBox(height: 16.h),
+            SizedBox(height: 20.h),
+
+            // Input Field
             Container(
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(12.r),
+                borderRadius: BorderRadius.circular(16.r),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.1),
+                    blurRadius: 10.r,
+                    offset: Offset(0, 4.h),
+                  ),
+                ],
               ),
               child: TextFormField(
                 controller: templateController,
                 onChanged: onChanged,
                 textInputAction: TextInputAction.done,
+                inputFormatters: [ProtectPlaceholderFormatter()],
                 decoration: InputDecoration(
-                  // labelText: "USSD Code",
                   hintText: "*9*{number}*50#",
-                  hintStyle: TextStyle(color: AppColors.hintTextColor),
+                  hintStyle: TextStyle(
+                    color: Colors.grey.shade400,
+                    fontSize: 16.sp,
+                  ),
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12.r),
+                    borderRadius: BorderRadius.circular(16.r),
                     borderSide: BorderSide.none,
                   ),
                   filled: true,
                   fillColor: Colors.white,
-                  prefixIcon: Icon(
-                    Icons.phone_callback,
-                    color: AppColors.primaryColor,
+                  prefixIcon: Container(
+                    margin: EdgeInsets.all(10.w),
+                    padding: EdgeInsets.all(8.w),
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryColor.shade50,
+                      borderRadius: BorderRadius.circular(12.r),
+                    ),
+                    child: Icon(
+                      Icons.phone_in_talk_rounded,
+                      color: AppColors.primaryColor,
+                      size: 24.sp,
+                    ),
                   ),
                   contentPadding: EdgeInsets.symmetric(
-                    horizontal: 14.w,
-                    vertical: 14.h,
+                    horizontal: 16.w,
+                    vertical: 16.h,
                   ),
                 ),
-                style: AppConstants.ussdTemplateTextStyle.copyWith(
-                  fontSize: 14.sp,
+                style: TextStyle(
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.primaryColor.shade900,
                 ),
                 keyboardType: TextInputType.phone,
               ),
             ),
-            SizedBox(height: 12.h),
+            SizedBox(height: 16.h),
+
+            // Info Box
             Container(
-              padding: EdgeInsets.all(10.w),
+              padding: EdgeInsets.all(14.w),
               decoration: BoxDecoration(
                 color: Colors.white.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(10.r),
+                borderRadius: BorderRadius.circular(14.r),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.2),
+                  width: 1,
+                ),
               ),
               child: Row(
                 children: [
                   Icon(
-                    Icons.lightbulb_outline,
-                    size: 16.sp,
-                    color: Colors.white70,
+                    Icons.info_outline_rounded,
+                    size: 20.sp,
+                    color: Colors.white,
                   ),
-                  SizedBox(width: 8.w),
+                  SizedBox(width: 12.w),
                   Expanded(
                     child: Text(
                       "Use {number} as placeholder for phone numbers",
-                      style: AppConstants.infoTextStyle.copyWith(
-                        fontSize: 10.sp,
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        color: Colors.white,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ),
@@ -125,5 +171,40 @@ class TemplateCard extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+class ProtectPlaceholderFormatter extends TextInputFormatter {
+  static const String placeholder = '{number}';
+
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    if (newValue.text.isEmpty && oldValue.text.contains(placeholder)) {
+      return oldValue;
+    }
+
+    if (oldValue.text.contains(placeholder) &&
+        !newValue.text.contains(placeholder)) {
+      return oldValue;
+    }
+
+    if (oldValue.text.contains(placeholder) && newValue.text.contains('{') ||
+        newValue.text.contains('}')) {
+      int oldPlaceholderStart = oldValue.text.indexOf(placeholder);
+      int oldPlaceholderEnd = oldPlaceholderStart + placeholder.length;
+
+      if (oldValue.selection.start >= oldPlaceholderStart &&
+          oldValue.selection.start <= oldPlaceholderEnd) {
+        // نتأكد إن {number} لسه موجودة كاملة
+        if (!newValue.text.contains(placeholder)) {
+          return oldValue;
+        }
+      }
+    }
+
+    return newValue;
   }
 }
