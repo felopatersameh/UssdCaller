@@ -43,7 +43,7 @@ class FloatingButtons extends StatelessWidget {
                 heroTag: "start",
               ),
             SizedBox(height: 10.h),
-
+            if (!isProcessRunning)
             FloatingActionButton.extended(
               onPressed: onAddNumber,
               backgroundColor: AppColors.accentColor,

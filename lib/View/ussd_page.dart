@@ -20,6 +20,7 @@ class UssdCallerPage extends StatefulWidget {
 
 class _UssdCallerPageState extends State<UssdCallerPage> {
   final TextEditingController templateController = TextEditingController();
+  final TextEditingController delayController = TextEditingController();
 
   int currentIndex = 0;
   final ValueNotifier<bool> isLoading = ValueNotifier<bool>(false);
@@ -29,15 +30,22 @@ class _UssdCallerPageState extends State<UssdCallerPage> {
   void initState() {
     super.initState();
     templateController.text = HiveService.getUssdTemplate();
+    delayController.text = HiveService.getUssdDelay().toString();
     templateController.addListener(_saveTemplate);
+    delayController.addListener(_saveDelay);
   }
 
   void _saveTemplate() {
     HiveService.setUssdTemplate(templateController.text);
   }
 
-  void _startProcessFromSpecificIndex(int index) {
-    startProcessFromIndex(index);
+  void _saveDelay() {
+    final int? delay = int.tryParse(delayController.text);
+    if (delay != null && delay > 0) {
+      HiveService.setUssdDelay(delay);
+    } else if (delayController.text.isEmpty) {
+      HiveService.setUssdDelay(15);
+    }
   }
 
   @override
@@ -45,6 +53,8 @@ class _UssdCallerPageState extends State<UssdCallerPage> {
     isLoading.dispose();
     templateController.removeListener(_saveTemplate);
     templateController.dispose();
+    delayController.removeListener(_saveDelay);
+    delayController.dispose();
     super.dispose();
   }
 
@@ -138,7 +148,7 @@ class _UssdCallerPageState extends State<UssdCallerPage> {
       number,
     );
 
-    await Future.delayed(const Duration(seconds: 5));
+    await Future.delayed(Duration(seconds: HiveService.getUssdDelay()));
 
     if (mounted) {
       isLoading.value = false;
@@ -149,6 +159,53 @@ class _UssdCallerPageState extends State<UssdCallerPage> {
         _showSnackBar("Call failed", backgroundColor: AppColors.errorColor);
       }
     }
+  }
+
+  void _cancelProcess() {
+    isProcessRunning = false;
+    isLoading.value = false;
+    setState(() {});
+    _showSnackBar("Process cancelled", backgroundColor: AppColors.warningColor);
+  }
+
+  void _showCancelProcessDialog() {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Icon(
+              Icons.warning_amber_rounded,
+              color: AppColors.warningColor,
+              size: 28,
+            ),
+            const SizedBox(width: 12),
+            const Text("Cancel Process"),
+          ],
+        ),
+        content: const Text(
+          "Are you sure you want to stop the ongoing USSD process?",
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("No"),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _cancelProcess();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.errorColor,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text("Yes, Cancel"),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> startProcessFromIndex(int index) async {
@@ -180,7 +237,7 @@ class _UssdCallerPageState extends State<UssdCallerPage> {
         await USSDService.callUSSDWithTemplate(templateController.text, number);
       }
 
-      await Future.delayed(const Duration(seconds: 5));
+      await Future.delayed(Duration(seconds: HiveService.getUssdDelay()));
 
       if (mounted && isProcessRunning) {
         isLoading.value = false;
@@ -234,6 +291,19 @@ class _UssdCallerPageState extends State<UssdCallerPage> {
                     templateController: templateController,
                     onChanged: (_) => setState(() {}),
                   ),
+                  SizedBox(height: 16.h),
+                  TextFormField(
+                    controller: delayController,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      labelText: "Delay (seconds)",
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      prefixIcon: const Icon(Icons.timer),
+                    ),
+                    onChanged: (value) => setState(() {}),
+                  ),
                   SizedBox(height: 24.h),
                   NumbersListHeader(onClearAll: clearAllNumbers),
                   SizedBox(height: 12.h),
@@ -244,7 +314,7 @@ class _UssdCallerPageState extends State<UssdCallerPage> {
                     callSingleNumber: callSingleNumber,
                     removeNumber: removeNumber,
                     isLoading: isLoading,
-                    onStartFromIndex: _startProcessFromSpecificIndex,
+                    onStartFromIndex: startProcessFromIndex,
                   ),
                   SizedBox(height: 80.h), // Space for FAB
                 ],
@@ -258,6 +328,29 @@ class _UssdCallerPageState extends State<UssdCallerPage> {
           isProcessRunning: isProcessRunning,
           onStartAll: () => startProcessFromIndex(0),
         ),
+        floatingActionButtonLocation: isProcessRunning
+            ? FloatingActionButtonLocation.centerFloat
+            : FloatingActionButtonLocation.endFloat,
+        bottomNavigationBar: isProcessRunning
+            ? Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: ElevatedButton(
+                  onPressed: _showCancelProcessDialog,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.errorColor,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text(
+                    "Cancel Process",
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              )
+            : null,
       ),
     );
   }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:auto_caller/utils/constants/app_colors.dart';
 import 'package:auto_caller/utils/constants/app_constants.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class TemplateCard extends StatelessWidget {
@@ -67,6 +68,9 @@ class TemplateCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12.r),
               ),
               child: TextFormField(
+                inputFormatters: [
+                  _ProtectPlaceholderFormatter()
+                ],
                 controller: templateController,
                 onChanged: onChanged,
                 textInputAction: TextInputAction.done,
@@ -125,5 +129,40 @@ class TemplateCard extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+class _ProtectPlaceholderFormatter extends TextInputFormatter {
+  static const String placeholder = '{number}';
+
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    // لو النص الجديد فاضي والقديم فيه {number}
+    if (newValue.text.isEmpty && oldValue.text.contains(placeholder)) {
+      return oldValue;
+    }
+
+    // لو {number} موجودة في القديم ومش موجودة في الجديد
+    if (oldValue.text.contains(placeholder) && !newValue.text.contains(placeholder)) {
+      return oldValue;
+    }
+
+    // لو المستخدم حاول يعدل جوا {number}
+    if (oldValue.text.contains(placeholder)) {
+      final oldPlaceholderStart = oldValue.text.indexOf(placeholder);
+      final oldPlaceholderEnd = oldPlaceholderStart + placeholder.length;
+
+      // لو الـ cursor جوا الـ placeholder
+      if (oldValue.selection.start >= oldPlaceholderStart &&
+          oldValue.selection.start <= oldPlaceholderEnd) {
+        if (!newValue.text.contains(placeholder)) {
+          return oldValue;
+        }
+      }
+    }
+
+    return newValue;
   }
 }
