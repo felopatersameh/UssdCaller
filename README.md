@@ -12,6 +12,8 @@ The `Auto Caller` Flutter application is a tool designed to automate and streaml
 * **Persistent Data Storage:** USSD templates and imported numbers are saved locally using Hive.
 * **Responsive User Interface:** Adapts to various screen sizes using `flutter_screenutil`.
 * **User Feedback:** Provides clear notifications and error messages through in-app snackbars.
+* **Call Management:** The application provides a loading overlay during automated calls to prevent user interaction and ensure call integrity.
+* **Error Handling:** Robust error handling is implemented to manage issues such as invalid USSD codes or network problems.
 
 ## Image
 
