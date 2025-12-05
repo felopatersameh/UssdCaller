@@ -14,50 +14,57 @@ class FloatingButtons extends StatelessWidget {
   });
 
   final VoidCallback onAddNumber;
-  final bool isProcessRunning;
+  final ValueNotifier<bool> isProcessRunning;
   final VoidCallback onStartAll;
 
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder(
-      valueListenable: HiveService.numbersBox.listenable(),
-      builder: (context, box, _) {
-        return Column(
-          mainAxisAlignment: MainAxisAlignment.end,
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            // Add Number Button (Always visible)
-            // Start All Button (Only when has numbers and not running)
-            if (HiveService.hasNumbers && !isProcessRunning)
-              FloatingActionButton.extended(
-                onPressed: onStartAll,
-                backgroundColor: AppColors.primaryColor,
-                icon: const Icon(Icons.play_arrow, color: Colors.white),
-                label: Text(
-                  "Start All",
-                  style: AppConstants.fabTextStyle.copyWith(
-                    color: Colors.white,
-                    fontSize: 14.sp,
-                  ),
-                ),
-                heroTag: "start",
-              ),
-            SizedBox(height: 10.h),
-
-            FloatingActionButton.extended(
-              onPressed: onAddNumber,
-              backgroundColor: AppColors.accentColor,
-              icon: const Icon(Icons.add, color: Colors.white),
-              label: Text(
-                "Add Number",
-                style: AppConstants.fabTextStyle.copyWith(
-                  color: Colors.white,
-                  fontSize: 14.sp,
-                ),
-              ),
-              heroTag: "add",
-            ),
-          ],
+      valueListenable: isProcessRunning,
+      builder: (context, runningStatus, _) {
+        return ValueListenableBuilder(
+          valueListenable: HiveService.numbersBox.listenable(),
+          builder: (context, box, _) {
+            return Column(
+              mainAxisAlignment: MainAxisAlignment.end,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                // Add Number Button (Always visible)
+                // Start All Button (Only when has numbers and not running)
+                if (!runningStatus) ...[
+                  if (HiveService.hasNumbers)
+                    FloatingActionButton.extended(
+                      onPressed: onStartAll,
+                      backgroundColor: AppColors.primaryColor,
+                      icon: const Icon(Icons.play_arrow, color: Colors.white),
+                      label: Text(
+                        "Start All",
+                        style: AppConstants.fabTextStyle.copyWith(
+                          color: Colors.white,
+                          fontSize: 14.sp,
+                        ),
+                      ),
+                      heroTag: "start",
+                    ),
+                  SizedBox(height: 10.h),
+                  if (!runningStatus)
+                    FloatingActionButton.extended(
+                      onPressed: onAddNumber,
+                      backgroundColor: AppColors.accentColor,
+                      icon: const Icon(Icons.add, color: Colors.white),
+                      label: Text(
+                        "Add Number",
+                        style: AppConstants.fabTextStyle.copyWith(
+                          color: Colors.white,
+                          fontSize: 14.sp,
+                        ),
+                      ),
+                      heroTag: "add",
+                    ),
+                ],
+              ],
+            );
+          },
         );
       },
     );

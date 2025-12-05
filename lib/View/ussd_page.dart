@@ -13,7 +13,6 @@ import 'widgets/numbers_list.dart';
 import 'widgets/numbers_list_header.dart';
 import 'widgets/template_card.dart';
 
-
 class UssdCallerPage extends StatefulWidget {
   const UssdCallerPage({super.key});
 
@@ -36,7 +35,7 @@ class _UssdCallerPageState extends State<UssdCallerPage> {
 
   int currentIndex = 0;
   final ValueNotifier<bool> isLoading = ValueNotifier<bool>(false);
-  bool isProcessRunning = false;
+  ValueNotifier<bool> isProcessRunning = ValueNotifier<bool>(false);
 
   void _resetCallStatusesOnTemplateChange() {
     final currentTemplateText = templateController.text.trim();
@@ -92,7 +91,8 @@ class _UssdCallerPageState extends State<UssdCallerPage> {
         icon: Icons.warning_amber_rounded,
         iconColor: AppColors.warningColor,
         title: "Confirm Delete",
-        content: "Are you sure you want to delete all numbers (${HiveService.totalNumbers})?",
+        content:
+            "Are you sure you want to delete all numbers (${HiveService.totalNumbers})?",
         actions: [
           DialogButton(
             label: "Cancel",
@@ -102,6 +102,7 @@ class _UssdCallerPageState extends State<UssdCallerPage> {
           DialogButton(
             label: "Delete All",
             onPressed: () {
+              HiveService.clearAll();
               Navigator.pop(context, true);
             },
             color: AppColors.errorColor,
@@ -119,27 +120,32 @@ class _UssdCallerPageState extends State<UssdCallerPage> {
   }
 
   void _showSnackBar(String message, {Color? backgroundColor, IconData? icon}) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            if (icon != null) ...[
-              Icon(icon, color: Colors.white, size: 20.sp),
-              SizedBox(width: 12.w),
-            ],
-            Expanded(child: Text(message)),
-          ],
-        ),
-        backgroundColor: backgroundColor ?? AppColors.primaryColor.shade700,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
-        margin: EdgeInsets.all(16.w),
-        duration: const Duration(seconds: 3),
-      ),
-    );
+    // ScaffoldMessenger.of(context).showSnackBar(
+    //   SnackBar(
+    //     content: Row(
+    //       children: [
+    //         if (icon != null) ...[
+    //           Icon(icon, color: Colors.white, size: 20.sp),
+    //           SizedBox(width: 12.w),
+    //         ],
+    //         Text(message),
+    //       ],
+    //     ),
+    //     backgroundColor: backgroundColor ?? AppColors.primaryColor.shade700,
+    //     behavior: SnackBarBehavior.floating,
+    //     shape: RoundedRectangleBorder(
+    //       borderRadius: BorderRadius.circular(12.r),
+    //     ),
+    //     // margin: EdgeInsets.all(16),
+    //     //  elevation: 8,
+    //     // duration: const Duration(seconds: 3),
+    //   ),
+    // );
   }
 
-  Future<AlreadyCalledDialogResult?> _showAlreadyCalledDialog(String number) async {
+  Future<AlreadyCalledDialogResult?> _showAlreadyCalledDialog(
+    String number,
+  ) async {
     return showDialog<AlreadyCalledDialogResult?>(
       context: context,
       barrierDismissible: false,
@@ -151,16 +157,19 @@ class _UssdCallerPageState extends State<UssdCallerPage> {
         actions: [
           DialogButton(
             label: "Call Again",
-            onPressed: () => Navigator.pop(context, AlreadyCalledDialogResult.callAgain),
+            onPressed: () =>
+                Navigator.pop(context, AlreadyCalledDialogResult.callAgain),
           ),
           DialogButton(
             label: "Skip",
-            onPressed: () => Navigator.pop(context, AlreadyCalledDialogResult.skip),
+            onPressed: () =>
+                Navigator.pop(context, AlreadyCalledDialogResult.skip),
             isOutlined: true,
           ),
           DialogButton(
             label: "Cancel",
-            onPressed: () => Navigator.pop(context, AlreadyCalledDialogResult.cancel),
+            onPressed: () =>
+                Navigator.pop(context, AlreadyCalledDialogResult.cancel),
             color: AppColors.errorColor,
             isOutlined: true,
           ),
@@ -169,7 +178,9 @@ class _UssdCallerPageState extends State<UssdCallerPage> {
     );
   }
 
-  Future<ConfirmationDialogResult?> _showConfirmationDialog(String number) async {
+  Future<ConfirmationDialogResult?> _showConfirmationDialog(
+    String number,
+  ) async {
     return showDialog<ConfirmationDialogResult?>(
       context: context,
       barrierDismissible: false,
@@ -181,22 +192,32 @@ class _UssdCallerPageState extends State<UssdCallerPage> {
         actions: [
           DialogButton(
             label: "✓ Success, Continue",
-            onPressed: () => Navigator.pop(context, ConfirmationDialogResult.successAndContinue),
+            onPressed: () => Navigator.pop(
+              context,
+              ConfirmationDialogResult.successAndContinue,
+            ),
             color: AppColors.accentColor,
           ),
           DialogButton(
             label: "⟳ Try Later, Continue",
-            onPressed: () => Navigator.pop(context, ConfirmationDialogResult.failAndTryLaterAndContinue),
+            onPressed: () => Navigator.pop(
+              context,
+              ConfirmationDialogResult.failAndTryLaterAndContinue,
+            ),
             color: AppColors.warningColor,
           ),
           DialogButton(
             label: "✓ Success, Stop",
-            onPressed: () => Navigator.pop(context, ConfirmationDialogResult.successAndStopAll),
+            onPressed: () => Navigator.pop(
+              context,
+              ConfirmationDialogResult.successAndStopAll,
+            ),
             isOutlined: true,
           ),
           DialogButton(
             label: "✗ Failed, Stop",
-            onPressed: () => Navigator.pop(context, ConfirmationDialogResult.failAndStopAll),
+            onPressed: () =>
+                Navigator.pop(context, ConfirmationDialogResult.failAndStopAll),
             color: AppColors.errorColor,
             isOutlined: true,
           ),
@@ -219,7 +240,7 @@ class _UssdCallerPageState extends State<UssdCallerPage> {
     }
 
     isLoading.value = true;
-
+    isProcessRunning.value = true;
     final success = await USSDService.callUSSDWithTemplate(
       templateController.text,
       callEntry.number,
@@ -229,12 +250,21 @@ class _UssdCallerPageState extends State<UssdCallerPage> {
 
     if (mounted) {
       isLoading.value = false;
+    isProcessRunning.value = false;
       HiveService.updateCallEntryStatus(index, isCalled: success);
 
       if (success) {
-        _showSnackBar("Call initiated", backgroundColor: AppColors.accentColor, icon: Icons.check_circle);
+        _showSnackBar(
+          "Call initiated",
+          backgroundColor: AppColors.accentColor,
+          icon: Icons.check_circle,
+        );
       } else {
-        _showSnackBar("Call failed", backgroundColor: AppColors.errorColor, icon: Icons.error);
+        _showSnackBar(
+          "Call failed",
+          backgroundColor: AppColors.errorColor,
+          icon: Icons.error,
+        );
       }
     }
   }
@@ -258,15 +288,17 @@ class _UssdCallerPageState extends State<UssdCallerPage> {
       return;
     }
 
-    isProcessRunning = true;
+    isProcessRunning.value = true;
     currentIndex = index;
     setState(() {});
 
-    while (currentIndex < HiveService.totalNumbers && isProcessRunning) {
+    while (currentIndex < HiveService.totalNumbers && isProcessRunning.value) {
       final callEntry = HiveService.getNumberAt(currentIndex);
       if (callEntry != null) {
         if (callEntry.isCalled) {
-          final alreadyCalledResult = await _showAlreadyCalledDialog(callEntry.number);
+          final alreadyCalledResult = await _showAlreadyCalledDialog(
+            callEntry.number,
+          );
 
           switch (alreadyCalledResult) {
             case AlreadyCalledDialogResult.callAgain:
@@ -276,9 +308,13 @@ class _UssdCallerPageState extends State<UssdCallerPage> {
               continue;
             case AlreadyCalledDialogResult.stopAll:
             case null:
-              isProcessRunning = false;
+              isProcessRunning.value = false;
               if (mounted) setState(() {});
-              _showSnackBar("Process stopped", backgroundColor: AppColors.warningColor, icon: Icons.stop_circle);
+              _showSnackBar(
+                "Process stopped",
+                backgroundColor: AppColors.warningColor,
+                icon: Icons.stop_circle,
+              );
               return;
             case AlreadyCalledDialogResult.cancel:
               return;
@@ -292,36 +328,61 @@ class _UssdCallerPageState extends State<UssdCallerPage> {
         );
         await Future.delayed(const Duration(seconds: 5));
 
-        if (mounted && isProcessRunning) {
+        if (mounted && isProcessRunning.value) {
           isLoading.value = false;
           final dialogResult = await _showConfirmationDialog(callEntry.number);
 
           switch (dialogResult) {
             case ConfirmationDialogResult.successAndContinue:
-              HiveService.updateCallEntryStatus(currentIndex, isCalled: callSuccess, shouldTryLater: false);
+              HiveService.updateCallEntryStatus(
+                currentIndex,
+                isCalled: callSuccess,
+                shouldTryLater: false,
+              );
               setState(() => currentIndex++);
               break;
             case ConfirmationDialogResult.failAndTryLaterAndContinue:
-              HiveService.updateCallEntryStatus(currentIndex, isCalled: false, shouldTryLater: true);
+              HiveService.updateCallEntryStatus(
+                currentIndex,
+                isCalled: false,
+                shouldTryLater: true,
+              );
               setState(() => currentIndex++);
               break;
             case ConfirmationDialogResult.successAndStopAll:
-              HiveService.updateCallEntryStatus(currentIndex, isCalled: callSuccess, shouldTryLater: false);
-              isProcessRunning = false;
-              setState(() {});
-              _showSnackBar("Process completed", backgroundColor: AppColors.accentColor, icon: Icons.check_circle);
+              HiveService.updateCallEntryStatus(
+                currentIndex,
+                isCalled: callSuccess,
+                shouldTryLater: false,
+              );
+              isProcessRunning.value = false;
+              _showSnackBar(
+                "Process completed",
+                backgroundColor: AppColors.accentColor,
+                icon: Icons.check_circle,
+              );
               return;
             case ConfirmationDialogResult.failAndStopAll:
-              HiveService.updateCallEntryStatus(currentIndex, isCalled: false, shouldTryLater: false);
-              isProcessRunning = false;
-              setState(() {});
-              _showSnackBar("Process stopped", backgroundColor: AppColors.errorColor, icon: Icons.error);
+              HiveService.updateCallEntryStatus(
+                currentIndex,
+                isCalled: false,
+                shouldTryLater: false,
+              );
+              isProcessRunning.value = false;
+              _showSnackBar(
+                "Process stopped",
+                backgroundColor: AppColors.errorColor,
+                icon: Icons.error,
+              );
               return;
             case ConfirmationDialogResult.cancel:
             case null:
-              isProcessRunning = false;
-              setState(() {});
-              _showSnackBar("Process cancelled", backgroundColor: AppColors.warningColor, icon: Icons.cancel);
+              isProcessRunning.value = false;
+              _showSnackBar(
+                "Process cancelled",
+                backgroundColor: AppColors.warningColor,
+                icon: Icons.cancel,
+              );
               return;
           }
         } else {
@@ -333,10 +394,13 @@ class _UssdCallerPageState extends State<UssdCallerPage> {
     }
 
     if (mounted) {
-      isProcessRunning = false;
-      setState(() {});
+      isProcessRunning.value = false;
       if (currentIndex == HiveService.totalNumbers) {
-        _showSnackBar("All done!", backgroundColor: AppColors.accentColor, icon: Icons.celebration);
+        _showSnackBar(
+          "All done!",
+          backgroundColor: AppColors.accentColor,
+          icon: Icons.celebration,
+        );
       }
     }
   }
@@ -344,7 +408,7 @@ class _UssdCallerPageState extends State<UssdCallerPage> {
   @override
   Widget build(BuildContext context) {
     return PopScope(
-      canPop: !isProcessRunning,
+      canPop: !isProcessRunning.value,
       onPopInvokedWithResult: (didPop, result) {
         if (didPop) {
           _showSnackBar(
@@ -356,7 +420,7 @@ class _UssdCallerPageState extends State<UssdCallerPage> {
       },
       child: Scaffold(
         backgroundColor: AppColors.backgroundColor,
-        body:Stack(
+        body: Stack(
           children: [
             CustomScrollView(
               slivers: [
@@ -390,7 +454,7 @@ class _UssdCallerPageState extends State<UssdCallerPage> {
                     ),
                   ),
                 ),
-                
+
                 // Content
                 SliverPadding(
                   padding: EdgeInsets.all(16.w),
@@ -418,7 +482,7 @@ class _UssdCallerPageState extends State<UssdCallerPage> {
                 ),
               ],
             ),
-                      LoadingOverlay(isLoading: isLoading, currentIndex: currentIndex),
+            LoadingOverlay(isLoading: isLoading, currentIndex: currentIndex),
           ],
         ),
         floatingActionButton: FloatingButtons(
@@ -426,9 +490,7 @@ class _UssdCallerPageState extends State<UssdCallerPage> {
           isProcessRunning: isProcessRunning,
           onStartAll: () => startProcessFromIndex(0),
         ),
-       
       ),
     );
   }
 }
-
